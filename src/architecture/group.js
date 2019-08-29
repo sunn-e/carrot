@@ -152,70 +152,43 @@ function Group(size) {
       }
     }
 
-    // will be assigned after checking the type of target
-    let source_nodes = [];
-    let target_nodes = [];
-
-    // assign source and target nodes
+    // Check type of target, assign source and target nodes
     // when inherited, the children may add the properties input_nodes and output_nodes
-    if (self.output_nodes) source_nodes = self.output_nodes;
-    else source_nodes = self.nodes;
-    if (target.input_nodes) target_nodes = target.input_nodes;
-    else if (target.nodes) target_nodes = target.nodes;
-    else if (target instanceof Node) target_nodes = [target];
-    else throw new TypeError("Type of target not supported");
+    let sources = self.output_nodes ? self.output_nodes : self.nodes
+    let targets = target.input_nodes
+      ? target.input_nodes
+      : (target.nodes)
+      ? target.nodes
+      : (target instanceof Node)
+      ? [target]
+      : null
+
+    if(!target) throw new TypeError("Type of target not supported")
 
     // lengths should match if one to one
-    if (method === methods.connection.ONE_TO_ONE && source_nodes.length !== target_nodes.length) {
-      throw new RangeError("Method is one-to-one but there are unequal number of source and target nodes");
+    if (method === methods.connection.ONE_TO_ONE && sources.length !== targets.length) {
+      throw new RangeError("One-to-one connections requrire equal number of source and target nodes");
     }
 
-    // the created connections will be added here. after the
-    // loops the connections will be added correspondingly
-    const new_connections = [];
-    for (let i = 0; i < target_nodes.length; i++) {
-      // check that the target node is not in the source nodes (because its ALL TO ELSE)
-      if (method === methods.connection.ALL_TO_ELSE) {
-        // slow as fuck. TODO: improve performance. e.g. have a map of owned nodes
-        let should_skip = false;
-        for (let j = 0; j < source_nodes.length; j++) {
-          if (target_nodes[i] == source_nodes[j]) {
-            should_skip = true;
-            break;
-          }
-        }
-        if (should_skip) continue;
-      }
-      // if ONE TO ONE
-      if (method === methods.connection.ONE_TO_ONE) {
-        // when one to one, we use the same index for source and target
-        // we checked before that the lengths match
-        let connection = source_nodes[i].connect(target_nodes[i], weight);
-        new_connections.push(connection);
-      }
-      // else (ALL_TO_ELSE or ALL_TO_ALL)
+    // Store connections in networks
+    const connect = (self_targeted)
+      ? (conn) => self.connections_self.push(conn)
+      : (conn) => { self.connections_outgoing.push(conn); target.connections_incoming.push(conn); }
+
+    const formed = []; // stores raw connections, backwards compatibility
+    const store = (conn) => { connect(conn); formed.push(conn); }
+
+    for (let i = 0; i < targets.length; i++) {
+      if (method === methods.connection.ONE_TO_ONE) store(sources[i].connect(targets[i], weight))
+
       else {
-        for (let j = 0; j < source_nodes.length; j++) {
-          // create the connection
-          let connection = source_nodes[j].connect(target_nodes[i], weight);
-          new_connections.push(connection);
-        }
+        if (method === methods.connection.ALL_TO_ELSE && (new Set(sources)).has(targets[i])) continue
+
+        for (let j = 0; j < sources.length; j++) { store(sources[j].connect(targets[i], weight)) }
       }
     }
 
-    // add the connections to source and targets connections
-    for (let i = 0; i < new_connections.length; i++) {
-      const connection = new_connections[i];
-      if (self_targeted) {
-        self.connections_self.push(connection);
-      }
-      else {
-        self.connections_outgoing.push(connection);
-        target.connections_incoming.push(connection);
-      }
-    }
-
-    return new_connections;
+    return formed
   },
 
   /**

@@ -80,9 +80,9 @@ const architect = {
 
     // check if there are input or output nodes, bc otherwise must guess based on number of outputs
     const found_output_nodes = _.reduce(nodes, (total_found, node) =>
-      total_found + (node.type === `output`), 0);
+      total_found + (node.type === 'output'), 0);
     const found_input_nodes = _.reduce(nodes, (total_found, node) =>
-      total_found + (node.type === `input`), 0);
+      total_found + (node.type === 'input'), 0);
 
     // Determine input and output nodes
     const inputs = [];
@@ -150,20 +150,19 @@ const architect = {
     // Convert arguments to Array
     const layers = Array.from(arguments);
 
-    if (layers.length < 3) throw new Error(`You have to specify at least 3 layers`);
+    if (layers.length < 3) throw new Error('You have to specify at least 3 layers');
 
     // Create a list of nodes/groups and add input nodes
-    const nodes = [new Group(layers[0])];
+    const groups = [new Group(layers[0])];
 
-    // add the following nodes and connect them
-    _.times(layers.length - 1, (index) => {
-      const layer = new Group(layers[index + 1]);
-      nodes.push(layer);
-      nodes[index].connect(nodes[index + 1], methods.connection.ALL_TO_ALL);
+    // Connect following groups to original
+    _.times(layers.length - 1, (i) => {
+      groups.push(new Group(layers[i + 1]));
+      groups[i].connect(groups[i + 1], methods.connection.ALL_TO_ALL);
     });
 
     // Construct the network
-    return architect.Construct(nodes);
+    return architect.Construct(groups);
   },
 
   /**
@@ -464,7 +463,7 @@ const architect = {
   *
   * @param {number} size Number of inputs and outputs (which is the same number)
   *
-  * @example <caption>Output will always be binary due to `Activation.STEP` function.</caption>
+  * @example <caption>Output will always be binary due to 'Activation.STEP' function.</caption>
   * let { architect } = require("@liquid-carrot/carrot");
   *
   * var network = architect.Hopfield(10);
