@@ -857,6 +857,28 @@ function Node(options) {
   },
 
   /**
+  *
+  * Returns a deep copy of the node
+  *
+  * @function clone
+  * @memberof Node
+  *
+  * @returns {neuron}
+  *
+  * @example
+  * const { Node } = require("@liquid-carrot/carrot")
+  *
+  * let original = new Node()
+  *
+  * let copy = original.clone()
+  *
+  * copy.activate() // original is unaffected
+  */
+  self.clone = function() {
+    return self.fromJSON(self.toJSON)
+  },
+
+  /**
   * Converts the node to a json object that can later be converted back
   *
   * @function toJSON
