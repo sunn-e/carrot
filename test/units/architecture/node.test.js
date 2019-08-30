@@ -580,6 +580,23 @@ describe("Node", function() {
       expect(node.isProjectedBy(other)).to.be.true;
     })
   });
+  describe("node.clone()", function() {
+    it(".clone() => {Node}", function() {
+      const original = new Node()
+
+      const copy = original.clone()
+
+      expect(copy).eql(original)
+    })
+
+    it(".clone() | Shouldn't return a shallow copy", function () {
+      const original = new Node
+
+      const copy = original.clone()
+
+      expect(copy).not.equal(original)
+    })
+  })
   describe("node.toJSON()", function() {
     it("node.toJSON() => {Object}", function() {
       const node = new Node();
